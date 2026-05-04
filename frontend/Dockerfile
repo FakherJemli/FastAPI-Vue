@@ -1,13 +1,17 @@
-FROM node:18.19.0-alpine3.18 as build-stage
+FROM node:18-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 COPY . .
-RUN npm run build --prod
+RUN npm run build
 
-# Production stage with Nginx
 FROM nginx:alpine
-COPY --from=build-stage /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/nginx.conf
-EXPOSE 80
+COPY --from=build /app/dist /usr/share/nginx/html
+ENV CLIENT_ID=
+ENV CLIENT_SECRET=
+ENV TENANT=
+ENV SCOPES=
+ENV FRONTEND=
+EXPOSE 8000
+HEALTHCHECK CMD curl -f http://localhost:8000/ || exit 1
 CMD ["nginx", "-g", "daemon off;"]
